@@ -61,8 +61,8 @@ const char APN_USER[]     = "";
 const char APN_PASS[]     = "";
 
 // -- Server Configuration --
-const char SERVER_HOST[]  = "3835e71d5b6265.lhr.life"; // Tunnel HTTP khusus agar bisa masuk ke laptop Anda
-const int  SERVER_PORT    = 80; 
+const char SERVER_HOST[]  = "alternate-wetting-and-drying-intern.vercel.app";
+const int  SERVER_PORT    = 443;
 const char API_ENDPOINT[] = "/api/data";
 
 // -- Device Configuration --
@@ -96,8 +96,8 @@ const int   ADC_RESOLUTION        = 4095;
 // ==================== GLOBAL OBJECTS ====================
 
 TinyGsm modem(SerialAT);
-// Kembali menggunakan koneksi HTTP biasa
-TinyGsmClient gsmClient(modem);
+// Menggunakan koneksi HTTPS untuk Vercel
+TinyGsmClientSecure gsmClient(modem);
 HttpClient http(gsmClient, SERVER_HOST, SERVER_PORT);
 
 // ==================== SETUP ====================

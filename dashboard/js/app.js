@@ -11,7 +11,7 @@
 
 const CONFIG = {
   // API Base URL - ubah sesuai server backend
-  API_BASE_URL: 'http://localhost:4000/api',
+  API_BASE_URL: 'https://alternate-wetting-and-drying-intern.vercel.app/api',
 
   // Device ID
   DEVICE_ID: 'flood-node-01',
