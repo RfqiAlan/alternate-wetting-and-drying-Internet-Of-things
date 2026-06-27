@@ -111,3 +111,6 @@ async function start() {
 }
 
 start();
+
+// Export app for serverless deployment (Vercel)
+module.exports = app;
