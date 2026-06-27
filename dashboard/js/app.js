@@ -10,8 +10,8 @@
 // ==================== CONFIGURATION ====================
 
 const CONFIG = {
-  // API Base URL - ubah sesuai server backend
-  API_BASE_URL: 'https://alternate-wetting-and-drying-intern.vercel.app/api',
+  // API Base URL - Firebase Realtime Database
+  API_BASE_URL: 'https://water-monitoring-iot-9046e-default-rtdb.asia-southeast1.firebasedatabase.app/data.json',
 
   // Device ID
   DEVICE_ID: 'flood-node-01',
@@ -79,25 +79,47 @@ async function fetchAllData() {
       updateChart(demoHistory);
       setOnlineStatus(true);
     } else {
-      // Fetch from real API
-      const [latestRes, historyRes] = await Promise.all([
-        fetch(`${CONFIG.API_BASE_URL}/data/latest?device_id=${CONFIG.DEVICE_ID}`),
-        fetch(`${CONFIG.API_BASE_URL}/data/history?device_id=${CONFIG.DEVICE_ID}&hours=${state.selectedHours}`)
-      ]);
+      // Fetch from Firebase (ambil 100 data terakhir)
+      const response = await fetch(`${CONFIG.API_BASE_URL}?orderBy="$key"&limitToLast=100`);
 
-      if (!latestRes.ok || !historyRes.ok) {
+      if (!response.ok) {
         throw new Error('API request failed');
       }
 
-      const latestData = await latestRes.json();
-      const historyData = await historyRes.json();
+      const rawData = await response.json();
 
-      if (latestData.success && latestData.data) {
-        updateDashboard(latestData.data);
+      let dataArray = [];
+      if (rawData) {
+        // Firebase mengembalikan object of objects, ubah jadi array
+        dataArray = Object.keys(rawData).map(key => {
+          return {
+            id: key,
+            ...rawData[key]
+          };
+        });
       }
 
-      if (historyData.success && historyData.data) {
-        updateChart(historyData.data);
+      // Urutkan berdasarkan waktu (terlama ke terbaru untuk grafik)
+      dataArray.sort((a, b) => (a.created_at || 0) - (b.created_at || 0));
+
+      if (dataArray.length > 0) {
+        const latestData = dataArray[dataArray.length - 1];
+        
+        // Pastikan timestamp formatnya benar untuk UI
+        let displayData = { ...latestData };
+        if (typeof displayData.created_at === 'number') {
+          displayData.created_at = new Date(displayData.created_at).toISOString();
+        }
+        
+        updateDashboard(displayData);
+        
+        // Format data untuk grafik
+        const chartData = dataArray.map(d => ({
+           ...d,
+           created_at: typeof d.created_at === 'number' ? new Date(d.created_at).toISOString() : d.created_at
+        }));
+        
+        updateChart(chartData);
       }
 
       setOnlineStatus(true);

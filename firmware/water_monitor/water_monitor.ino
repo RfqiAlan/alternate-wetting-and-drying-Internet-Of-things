@@ -39,7 +39,6 @@
 #define TINY_GSM_RX_BUFFER 1024
 
 #include <TinyGsmClient.h>
-#include <ArduinoHttpClient.h>
 #include <ArduinoJson.h>
 
 // -- Pin Definitions --
@@ -60,11 +59,10 @@ const char APN[]          = "internet";          // Ganti sesuai provider (Telko
 const char APN_USER[]     = "";
 const char APN_PASS[]     = "";
 
-// -- Server Configuration --
-const char SERVER_HOST[]  = "alternate-wetting-and-drying-intern.vercel.app";
+// -- Server Configuration (Firebase) --
+const char SERVER_HOST[]  = "water-monitoring-iot-9046e-default-rtdb.asia-southeast1.firebasedatabase.app";
 const int  SERVER_PORT    = 443;
-const char API_ENDPOINT[] = "/api/data";
-
+const char API_ENDPOINT[] = "/data.json";
 // -- Device Configuration --
 const char DEVICE_ID[]    = "flood-node-01";
 
@@ -96,10 +94,8 @@ const int   ADC_RESOLUTION        = 4095;
 // ==================== GLOBAL OBJECTS ====================
 
 TinyGsm modem(SerialAT);
-// Menggunakan koneksi HTTPS untuk Vercel
 TinyGsmClientSecure gsmClient(modem);
 HttpClient http(gsmClient, SERVER_HOST, SERVER_PORT);
-
 // ==================== SETUP ====================
 
 void setup() {
@@ -168,9 +164,9 @@ void loop() {
   bool sent = sendDataToServer(waterLevel, batteryVoltage, signalStrength, status);
 
   if (sent) {
-    SerialMon.println(F("[HTTP] Data sent successfully."));
+    SerialMon.println(F("[FIREBASE] Data sent successfully!"));
   } else {
-    SerialMon.println(F("[HTTP] Failed to send data."));
+    SerialMon.println(F("[FIREBASE] Failed to send data."));
     reconnectGPRS();
   }
 
@@ -285,21 +281,27 @@ String determineStatus(float waterLevel) {
 // ==================== NETWORK FUNCTIONS ====================
 
 /**
- * Mengirim data ke server via HTTP POST
+ * Mengirim data ke Relay Server (HTTP) → Relay meneruskan ke Vercel (HTTPS)
+ *
+ * Alur: ESP32/SIM800C → HTTP → Ngrok → Relay (laptop) → HTTPS → Vercel → Supabase
  */
 bool sendDataToServer(float waterLevel, float batteryVoltage, int signalStrength, String status) {
   // Build JSON payload
   StaticJsonDocument<256> doc;
   doc["device_id"]        = DEVICE_ID;
-  doc["water_level_cm"]   = round(waterLevel * 10.0) / 10.0;  // 1 decimal
-  doc["battery_voltage"]  = round(batteryVoltage * 100.0) / 100.0;  // 2 decimals
+  doc["water_level_cm"]   = round(waterLevel * 10.0) / 10.0;
+  doc["battery_voltage"]  = round(batteryVoltage * 100.0) / 100.0;
   doc["signal_strength"]  = signalStrength;
   doc["status"]           = status;
+  
+  // Request Firebase untuk mengisi waktu saat ini secara otomatis
+  JsonObject ts = doc.createNestedObject("created_at");
+  ts[".sv"] = "timestamp";
 
   String payload;
   serializeJson(doc, payload);
 
-  SerialMon.print(F("[HTTP] Sending: "));
+  SerialMon.print(F("[FIREBASE] Sending: "));
   SerialMon.println(payload);
 
   // Check GPRS connection
@@ -310,7 +312,7 @@ bool sendDataToServer(float waterLevel, float batteryVoltage, int signalStrength
     }
   }
 
-  // Send HTTP POST
+  // Send HTTPS POST ke Firebase
   http.beginRequest();
   http.post(API_ENDPOINT);
   http.sendHeader("Content-Type", "application/json");
@@ -323,9 +325,9 @@ bool sendDataToServer(float waterLevel, float batteryVoltage, int signalStrength
   int statusCode = http.responseStatusCode();
   String response = http.responseBody();
 
-  SerialMon.print(F("[HTTP] Response code: "));
+  SerialMon.print(F("[FIREBASE] Response code: "));
   SerialMon.println(statusCode);
-  SerialMon.print(F("[HTTP] Response: "));
+  SerialMon.print(F("[FIREBASE] Response: "));
   SerialMon.println(response);
 
   return (statusCode >= 200 && statusCode < 300);
