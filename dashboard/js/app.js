@@ -17,7 +17,7 @@ const CONFIG = {
   DEVICE_ID: 'flood-node-01',
 
   // Auto-refresh interval (ms)
-  REFRESH_INTERVAL: 30000, // 30 detik
+  REFRESH_INTERVAL: 10000, // 10 detik (UNTUK DEMO)
 
   // Chart history hours
   DEFAULT_HISTORY_HOURS: 24,

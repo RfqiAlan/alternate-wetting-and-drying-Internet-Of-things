@@ -84,7 +84,7 @@ const float THRESHOLD_WASPADA = 30.0;
 const float THRESHOLD_BAHAYA  = 60.0;
 
 // -- Timing --
-const unsigned long SEND_INTERVAL_MS = 5 * 60 * 1000;  // 5 menit
+const unsigned long SEND_INTERVAL_MS = 10 * 1000;  // 10 detik (UNTUK DEMO)
 const unsigned long DEEP_SLEEP_US    = 5 * 60 * 1000000ULL;  // 5 menit (deep sleep)
 const bool USE_DEEP_SLEEP            = false;    // Set true untuk hemat daya
 
