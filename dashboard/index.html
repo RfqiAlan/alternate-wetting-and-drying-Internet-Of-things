@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Monitoring Tinggi Air IoT</title>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <!-- Chart.js Annotation Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.2/dist/chartjs-plugin-annotation.min.js"></script>
+</head>
+<body class="status-aman">
+  
+  <div class="app-container">
+    
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <div class="header-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="header-title">Monitoring Tinggi Air</h1>
+          <p class="header-subtitle">Stasiun: <span id="station-id">Node-01 (JSN-SR04T)</span></p>
+        </div>
+      </div>
+      
+      <div class="header-right">
+        <div class="last-update" id="next-refresh">Refresh in 30s</div>
+        <div class="connection-status">
+          <div class="status-dot" id="connection-dot"></div>
+          <span id="connection-text">Terhubung</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN GRID -->
+    <main class="dashboard-grid">
+      
+      <!-- MAIN LEVEL DISPLAY -->
+      <section class="card card-main">
+        <div class="card-label">
+          <span class="icon">💧</span> Tinggi Air Terkini
+        </div>
+        
+        <div class="water-level-display">
+          <span class="water-level-value" id="water-level-value">--.-</span>
+          <span class="water-level-unit">cm</span>
+        </div>
+        
+        <div class="status-badge badge-aman" id="status-badge">
+          <div class="badge-dot"></div>
+          <span class="badge-text">AMAN</span>
+        </div>
+      </section>
+
+      <!-- GAUGE DISPLAY -->
+      <section class="card card-sidebar">
+        <div class="card-label">
+          <span class="icon">📐</span> Indikator Kapasitas
+        </div>
+        
+        <div class="gauge-container">
+          <svg class="gauge-svg" viewBox="0 0 160 160">
+            <circle class="gauge-bg" cx="80" cy="80" r="70" />
+            <circle class="gauge-fill" id="gauge-fill" cx="80" cy="80" r="70" stroke-dasharray="440" stroke-dashoffset="440" />
+          </svg>
+          <div class="gauge-center-text">
+            <div class="gauge-percentage" id="gauge-percentage">--%</div>
+            <div class="gauge-label">Terisi</div>
+          </div>
+        </div>
+
+        <div class="threshold-labels">
+          <div class="threshold-item">
+            <div class="threshold-dot" style="background: var(--color-safe)"></div> Aman
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-dot" style="background: var(--color-warning)"></div> Waspada
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-dot" style="background: var(--color-danger)"></div> Bahaya
+          </div>
+        </div>
+      </section>
+
+      <!-- CHART SECTION -->
+      <section class="card card-chart">
+        <div class="chart-header">
+          <div class="card-label" style="margin-bottom: 0;">
+            <span class="icon">📈</span> Histori Pergerakan Air
+          </div>
+          <div class="chart-controls">
+            <button class="chart-btn" data-hours="1">1J</button>
+            <button class="chart-btn" data-hours="6">6J</button>
+            <button class="chart-btn active" data-hours="24">24J</button>
+            <button class="chart-btn" data-hours="72">3H</button>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="history-chart"></canvas>
+        </div>
+      </section>
+
+      <!-- INFO: BATTERY -->
+      <section class="card card-info card-battery">
+        <div class="card-label">
+          <span class="icon">🔋</span> Status Baterai (LiFePO4)
+        </div>
+        <div class="info-value" id="battery-value">--.-V</div>
+        <div class="info-bar"><div class="info-bar-fill" id="battery-bar" style="width: 0%"></div></div>
+        <div class="info-detail" id="battery-detail">--%</div>
+      </section>
+
+      <!-- INFO: SIGNAL -->
+      <section class="card card-info card-signal">
+        <div class="card-label">
+          <span class="icon">📶</span> Sinyal GSM (SIM800C)
+        </div>
+        <div class="info-value" id="signal-value">--</div>
+        <div class="info-bar"><div class="info-bar-fill" id="signal-bar" style="width: 0%"></div></div>
+        <div class="info-detail" id="signal-detail">--%</div>
+      </section>
+
+      <!-- INFO: LAST UPDATE -->
+      <section class="card card-info card-update">
+        <div class="card-label">
+          <span class="icon">⏱️</span> Pembaruan Terakhir
+        </div>
+        <div class="info-value" id="update-value">--</div>
+        <div class="info-detail" id="update-detail" style="margin-top: auto">--</div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      Sistem Monitoring Tinggi Air Berbasis IoT &copy; 2026. ESP32 + SIM800C.
+    </footer>
+    
+  </div>
+
+  <!-- Application Logic -->
+  <script src="js/app.js"></script>
+</body>
+</html>
